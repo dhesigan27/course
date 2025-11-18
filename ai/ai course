@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Course Recommendation System</title>
+  <style>
+    :root{
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --muted: #6b7280;
+      --accent: #4f46e5;
+      --glass: rgba(255,255,255,0.6);
+      --radius: 12px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    *{box-sizing: border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:#0f172a}
+
+    .container{max-width:1100px;margin:32px auto;padding:20px}
+
+    /* Header */
+    header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:20px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:54px;height:54px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:18px}
+    h1{margin:0;font-size:20px}
+    p.lead{margin:0;color:var(--muted);font-size:14px}
+
+    /* Layout */
+    .grid{display:grid;grid-template-columns:320px 1fr;gap:20px}
+
+    /* Sidebar filters */
+    .card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:0 6px 18px rgba(12,18,32,0.06)}
+    .filters h3{margin:0 0 12px 0;font-size:15px}
+    label.filter-row{display:flex;gap:8px;align-items:center;padding:8px;border-radius:8px;cursor:pointer}
+    input[type=checkbox]{width:16px;height:16px}
+    select,input[type=range]{width:100%}
+    .btn{display:inline-block;padding:10px 14px;border-radius:10px;background:var(--accent);color:#fff;font-weight:600;border:none;cursor:pointer}
+    .secondary{background:transparent;border:1px solid #e6e9f2;color:var(--muted)}
+
+    /* Courses list */
+    .controls{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+    .search{flex:1}
+    .courses{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+    .course{background:linear-gradient(180deg,rgba(0,0,0,0.02),transparent);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+    .course .meta{display:flex;justify-content:space-between;align-items:center}
+    .course h4{margin:0;font-size:16px}
+    .course p{margin:0;color:var(--muted);font-size:13px}
+    .tags{display:flex;gap:8px;flex-wrap:wrap}
+    .tag{background:#eef2ff;padding:6px 8px;border-radius:999px;font-size:12px;color:#3730a3}
+    .rating{font-weight:700;color:var(--accent)}
+    .foot{display:flex;justify-content:space-between;align-items:center;margin-top:auto}
+
+    /* Responsive */
+    @media (max-width:840px){
+      .grid{grid-template-columns:1fr;}
+      .logo{width:44px;height:44px}
+    }
+
+    /* small helpers */
+    .muted{color:var(--muted);font-size:13px}
+    .small{font-size:12px;color:var(--muted)}
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">AI</div>
+        <div>
+          <h1>AI Course Recommender</h1>
+          <p class="lead">Find the best AI courses for your goals — personalized & fast.</p>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="small">Powered by a simple client-side recommender</div>
+      </div>
+    </header>
+
+    <main class="grid">
+      <aside class="card filters" aria-label="filters">
+        <h3>Personalize</h3>
+
+        <div style="margin-bottom:10px">
+          <label class="small">Interest areas</label>
+          <div style="margin-top:8px">
+            <label class="filter-row"><input type="checkbox" value="Machine Learning"> <span>Machine Learning</span></label>
+            <label class="filter-row"><input type="checkbox" value="Deep Learning"> <span>Deep Learning</span></label>
+            <label class="filter-row"><input type="checkbox" value="NLP"> <span>Natural Language Processing</span></label>
+            <label class="filter-row"><input type="checkbox" value="Computer Vision"> <span>Computer Vision</span></label>
+            <label class="filter-row"><input type="checkbox" value="Data Engineering"> <span>Data Engineering</span></label>
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <label class="small">Experience level</label>
+          <select id="level">
+            <option value="any">Any</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <label class="small">Max duration (hours)</label>
+          <input id="maxDuration" type="range" min="1" max="200" value="40" oninput="document.getElementById('durVal').textContent=this.value">
+          <div class="small">Up to <span id="durVal">40</span> hours</div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn" id="recommendBtn">Recommend</button>
+          <button class="btn secondary" id="resetBtn">Reset</button>
+        </div>
+
+        <hr style="margin:16px 0;border:none;border-top:1px solid #eef2ff">
+        <div class="small">Tip: Combine interest filters with level and duration for better suggestions.</div>
+      </aside>
+
+      <section>
+        <div class="card">
+          <div class="controls">
+            <input id="search" class="search" placeholder="Search courses, instructors or tags...">
+            <select id="sort">
+              <option value="score">Sort: Recommended</option>
+              <option value="rating">Sort: Rating</option>
+              <option value="duration">Sort: Duration</option>
+            </select>
+          </div>
+
+          <div id="resultInfo" class="muted" style="margin-bottom:8px">Showing <span id="count">0</span> courses</div>
+          <div id="courses" class="courses" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Sample dataset (in real app this would come from an API/database)
+    const COURSES = [
+      {id:1,title:'Intro to Machine Learning',provider:'Coursera',tags:['Machine Learning'],level:'beginner',hours:32,rating:4.6},
+      {id:2,title:'Deep Learning Specialization',provider:'Coursera',tags:['Deep Learning','Machine Learning'],level:'intermediate',hours:120,rating:4.8},
+      {id:3,title:'NLP with Transformers',provider:'Udemy',tags:['NLP','Deep Learning'],level:'advanced',hours:20,rating:4.5},
+      {id:4,title:'Computer Vision Fundamentals',provider:'edX',tags:['Computer Vision','Deep Learning'],level:'intermediate',hours:45,rating:4.4},
+      {id:5,title:'Data Engineering on GCP',provider:'Coursera',tags:['Data Engineering'],level:'intermediate',hours:28,rating:4.3},
+      {id:6,title:'AI for Everyone',provider:'Coursera',tags:['Machine Learning'],level:'beginner',hours:6,rating:4.7},
+      {id:7,title:'Practical Deep Learning',provider:'Fast.ai',tags:['Deep Learning','Computer Vision'],level:'advanced',hours:60,rating:4.9}
+    ];
+
+    // Simple scoring function: matches on tags + level + rating + duration
+    function scoreCourse(course, prefs){
+      let score = 0;
+      // tag match
+      if(prefs.tags.length===0) score += 1; // small default boost if user didn't select tags
+      for(const t of prefs.tags){ if(course.tags.includes(t)) score += 3 }
+      // level match
+      if(prefs.level !== 'any'){
+        if(course.level === prefs.level) score += 2
+      } else score += 0.5
+      // rating
+      score += (course.rating - 3) // center around 0
+      // duration penalty if too long
+      if(course.hours > prefs.maxDuration) score -= (course.hours - prefs.maxDuration)/20
+      return score
+    }
+
+    // DOM helpers
+    const coursesEl = document.getElementById('courses');
+    const countEl = document.getElementById('count');
+
+    function renderCourses(list){
+      coursesEl.innerHTML = '';
+      if(list.length===0){ coursesEl.innerHTML = '<div class="muted">No courses matched — try relaxing filters.</div>'; countEl.textContent='0'; return }
+      countEl.textContent = String(list.length);
+      for(const c of list){
+        const el = document.createElement('article'); el.className='course card';
+        el.innerHTML = `
+          <div class="meta"><h4>${c.title}</h4><div class="rating">★ ${c.rating.toFixed(1)}</div></div>
+          <p class="small">${c.provider} · ${c.hours} hours · ${c.level}</p>
+          <div class="tags" aria-hidden>
+            ${c.tags.map(t=>`<span class="tag">${t}</span>`).join('')}
+          </div>
+          <div class="foot">
+            <div class="small">Course ID: ${c.id}</div>
+            <button class="btn" onclick="preview(${c.id})">View</button>
+          </div>
+        `;
+        coursesEl.appendChild(el);
+      }
+    }
+
+    function getPreferences(){
+      const tags = Array.from(document.querySelectorAll('.filters input[type=checkbox]:checked')).map(i=>i.value);
+      const level = document.getElementById('level').value;
+      const maxDuration = Number(document.getElementById('maxDuration').value);
+      const q = document.getElementById('search').value.trim().toLowerCase();
+      const sort = document.getElementById('sort').value;
+      return {tags,level,maxDuration,q,sort}
+    }
+
+    function recommend(){
+      const prefs = getPreferences();
+      // compute scores
+      const scored = COURSES.map(c=>({c,score:scoreCourse(c,prefs)}));
+      // filter by query and basic constraints
+      let filtered = scored.filter(item=>{
+        const c = item.c;
+        // search text match
+        if(prefs.q){
+          const hay = (c.title+' '+c.provider+' '+c.tags.join(' ')).toLowerCase();
+          if(!hay.includes(prefs.q)) return false;
+        }
+        // level filter
+        if(prefs.level !== 'any' && c.level !== prefs.level) return false;
+        // duration hard filter - allow slightly longer if score high (polite)
+        if(c.hours > prefs.maxDuration + 60) return false;
+        return true;
+      });
+
+      // sort based on selected sort method
+      if(prefs.sort === 'rating') filtered.sort((a,b)=>b.c.rating - a.c.rating)
+      else if(prefs.sort === 'duration') filtered.sort((a,b)=>a.c.hours - b.c.hours)
+      else filtered.sort((a,b)=>b.score - a.score)
+
+      // unwrap courses
+      const result = filtered.map(x=>x.c);
+      renderCourses(result);
+    }
+
+    // preview stub
+    function preview(id){
+      const c = COURSES.find(x=>x.id===id);
+      alert(`${c.title}\nProvider: ${c.provider}\nDuration: ${c.hours} hours\nLevel: ${c.level}`)
+    }
+
+    // wire events
+    document.getElementById('recommendBtn').addEventListener('click', recommend);
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      document.querySelectorAll('.filters input[type=checkbox]').forEach(i=>i.checked=false);
+      document.getElementById('level').value='any';
+      document.getElementById('maxDuration').value=40; document.getElementById('durVal').textContent='40';
+      document.getElementById('search').value='';
+      document.getElementById('sort').value='score';
+      renderCourses(COURSES);
+    })
+
+    // live search / sort
+    document.getElementById('search').addEventListener('input', recommend);
+    document.getElementById('sort').addEventListener('change', recommend);
+
+    // initial render
+    renderCourses(COURSES);
+  </script>
+</body>
+</html>
